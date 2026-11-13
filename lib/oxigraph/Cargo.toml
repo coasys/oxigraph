@@ -24,6 +24,9 @@ http-client-rustls-native = ["http-client", "oxhttp/rustls-ring-native"]
 rocksdb-pkg-config = ["oxrocksdb-sys/pkg-config"]
 rocksdb-debug = []
 rdf-12 = ["oxrdfio/rdf-12", "spareval/sparql-12"]
+# Optional ordered auxiliary key-value space that commits atomically with the quads.
+# On RocksDB it adds the `aux` column family: a build without this feature cannot open that database.
+aux-kv = []
 
 [dependencies]
 dashmap.workspace = true

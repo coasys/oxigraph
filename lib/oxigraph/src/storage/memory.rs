@@ -16,6 +16,9 @@ use std::mem::{take, transmute};
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::{Arc, Condvar, Mutex, RwLock, Weak};
 
+#[cfg(feature = "aux-kv")]
+pub mod aux_kv;
+
 /// In-memory storage working with MVCC
 ///
 /// Each quad and graph name is annotated by a version range, allowing to read old versions while updates are applied.
@@ -27,6 +30,8 @@ pub struct MemoryStorage {
     version_counter: Arc<AtomicUsize>,
     transaction_counter: Arc<AtomicUsize>,
     transaction_lock: Arc<Lock>,
+    #[cfg(feature = "aux-kv")]
+    aux: Arc<aux_kv::AuxSpace>,
 }
 
 struct Content {
@@ -59,6 +64,8 @@ impl MemoryStorage {
             version_counter: Arc::new(AtomicUsize::new(0)),
             transaction_counter: Arc::new(AtomicUsize::new(usize::MAX >> 1)),
             transaction_lock: Arc::new(Lock::new()),
+            #[cfg(feature = "aux-kv")]
+            aux: Arc::default(),
         }
     }
 
@@ -82,6 +89,8 @@ impl MemoryStorage {
             snapshot_id,
             _transaction_guard: transaction_guard,
             committed: false,
+            #[cfg(feature = "aux-kv")]
+            aux_writes: aux_kv::AuxWrites::new(),
         }
     }
 
@@ -422,6 +431,8 @@ pub struct MemoryStorageTransaction<'a> {
     snapshot_id: usize,
     committed: bool,
     _transaction_guard: LockGuard<'a>,
+    #[cfg(feature = "aux-kv")]
+    aux_writes: aux_kv::AuxWrites,
 }
 
 impl MemoryStorageTransaction<'_> {
@@ -690,6 +701,12 @@ impl MemoryStorageTransaction<'_> {
                 }
             }
         }
+        // Readers of the auxiliary space wait for this guard: they see the new version and its writes together.
+        #[cfg(feature = "aux-kv")]
+        let _aux_guard = self
+            .storage
+            .aux
+            .apply(take(&mut self.aux_writes), new_version_id);
         self.storage
             .version_counter
             .store(new_version_id, Ordering::Release);

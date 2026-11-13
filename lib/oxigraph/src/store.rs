@@ -2433,3 +2433,8 @@ mod tests {
         Ok(())
     }
 }
+
+#[cfg(feature = "aux-kv")]
+mod aux_kv;
+#[cfg(feature = "aux-kv")]
+pub use aux_kv::AuxIter;

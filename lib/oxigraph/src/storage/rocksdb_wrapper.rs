@@ -41,6 +41,9 @@ pub struct ColumnFamilyDefinition {
     pub use_iter: bool,
     pub min_prefix_size: usize,
     pub unordered_writes: bool,
+    /// Installs RocksDB's `UInt64AddOperator` as the merge operator.
+    #[cfg(feature = "aux-kv")]
+    pub uint64_add_merge: bool,
 }
 
 #[derive(Clone, Copy, Debug, Default)]
@@ -380,6 +383,8 @@ impl Db {
                 use_iter: true,
                 min_prefix_size: 0,
                 unordered_writes: false,
+                #[cfg(feature = "aux-kv")]
+                uint64_add_merge: false,
             })
         }
         let column_family_names = column_families.iter().map(|c| c.name).collect::<Vec<_>>();
@@ -403,6 +408,10 @@ impl Db {
                 }
                 if cf.unordered_writes {
                     rocksdb_options_set_unordered_write(options, 1);
+                }
+                #[cfg(feature = "aux-kv")]
+                if cf.uint64_add_merge {
+                    rocksdb_options_set_uint64add_merge_operator(options);
                 }
                 options
             })
@@ -1386,3 +1395,6 @@ mod tests {
         Ok(())
     }
 }
+
+#[cfg(feature = "aux-kv")]
+pub mod aux_kv;
