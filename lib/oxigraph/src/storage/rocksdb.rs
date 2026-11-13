@@ -79,6 +79,8 @@ pub struct RocksDbStorage {
     dpos_cf: ColumnFamily,
     dosp_cf: ColumnFamily,
     graphs_cf: ColumnFamily,
+    #[cfg(feature = "aux-kv")]
+    aux_cf: ColumnFamily,
 }
 
 impl RocksDbStorage {
@@ -108,67 +110,91 @@ impl RocksDbStorage {
                 use_iter: false,
                 min_prefix_size: 0,
                 unordered_writes: true,
+                #[cfg(feature = "aux-kv")]
+                uint64_add_merge: false,
             },
             ColumnFamilyDefinition {
                 name: SPOG_CF,
                 use_iter: true,
                 min_prefix_size: 17, // named or blank node start
                 unordered_writes: false,
+                #[cfg(feature = "aux-kv")]
+                uint64_add_merge: false,
             },
             ColumnFamilyDefinition {
                 name: POSG_CF,
                 use_iter: true,
                 min_prefix_size: 17, // named node start
                 unordered_writes: false,
+                #[cfg(feature = "aux-kv")]
+                uint64_add_merge: false,
             },
             ColumnFamilyDefinition {
                 name: OSPG_CF,
                 use_iter: true,
                 min_prefix_size: 0, // There are small literals...
                 unordered_writes: false,
+                #[cfg(feature = "aux-kv")]
+                uint64_add_merge: false,
             },
             ColumnFamilyDefinition {
                 name: GSPO_CF,
                 use_iter: true,
                 min_prefix_size: 17, // named or blank node start
                 unordered_writes: false,
+                #[cfg(feature = "aux-kv")]
+                uint64_add_merge: false,
             },
             ColumnFamilyDefinition {
                 name: GPOS_CF,
                 use_iter: true,
                 min_prefix_size: 17, // named or blank node start
                 unordered_writes: false,
+                #[cfg(feature = "aux-kv")]
+                uint64_add_merge: false,
             },
             ColumnFamilyDefinition {
                 name: GOSP_CF,
                 use_iter: true,
                 min_prefix_size: 17, // named or blank node start
                 unordered_writes: false,
+                #[cfg(feature = "aux-kv")]
+                uint64_add_merge: false,
             },
             ColumnFamilyDefinition {
                 name: DSPO_CF,
                 use_iter: true,
                 min_prefix_size: 17, // named or blank node start
                 unordered_writes: false,
+                #[cfg(feature = "aux-kv")]
+                uint64_add_merge: false,
             },
             ColumnFamilyDefinition {
                 name: DPOS_CF,
                 use_iter: true,
                 min_prefix_size: 17, // named or blank node start
                 unordered_writes: false,
+                #[cfg(feature = "aux-kv")]
+                uint64_add_merge: false,
             },
             ColumnFamilyDefinition {
                 name: DOSP_CF,
                 use_iter: true,
                 min_prefix_size: 0, // There are small literals...
                 unordered_writes: false,
+                #[cfg(feature = "aux-kv")]
+                uint64_add_merge: false,
             },
             ColumnFamilyDefinition {
                 name: GRAPHS_CF,
                 use_iter: true,
                 min_prefix_size: 17, // named or blank node start
                 unordered_writes: false,
+                #[cfg(feature = "aux-kv")]
+                uint64_add_merge: false,
             },
+            #[cfg(feature = "aux-kv")]
+            aux_kv::column_family(),
         ]
     }
 
@@ -186,6 +212,8 @@ impl RocksDbStorage {
             dpos_cf: db.column_family(DPOS_CF)?,
             dosp_cf: db.column_family(DOSP_CF)?,
             graphs_cf: db.column_family(GRAPHS_CF)?,
+            #[cfg(feature = "aux-kv")]
+            aux_cf: db.column_family(aux_kv::AUX_CF)?,
             db,
         };
         this.migrate()?;
@@ -389,6 +417,8 @@ impl RocksDbStorage {
         self.db.compact(&self.dspo_cf)?;
         self.db.compact(&self.dpos_cf)?;
         self.db.compact(&self.dosp_cf)?;
+        #[cfg(feature = "aux-kv")]
+        self.db.compact(&self.aux_cf)?;
         self.db.compact(&self.id2str_cf)
     }
 
@@ -1816,3 +1846,6 @@ mod tests {
         Ok(())
     }
 }
+
+#[cfg(feature = "aux-kv")]
+pub mod aux_kv;
