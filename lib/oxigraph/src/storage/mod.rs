@@ -17,6 +17,8 @@ use std::path::Path;
 #[cfg(not(target_family = "wasm"))]
 use std::{io, thread};
 
+#[cfg(feature = "aux-kv")]
+pub mod aux_kv;
 #[cfg(all(not(target_family = "wasm"), feature = "rocksdb"))]
 mod binary_encoder;
 mod error;
